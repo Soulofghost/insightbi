@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  insightbi:
+    build: .
+    container_name: insightbi-analytics
+    ports:
+      - "8000:8000"
+    environment:
+      - PORT=8000
+      - INSIGHTBI_DB=/app/data/insightbi.db
+    volumes:
+      - bi_data:/app/data
+    restart: unless-stopped
+
+volumes:
+  bi_data:

@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>InsightBI — Executive Business Intelligence &amp; Multi-Dimensional Analytics</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="bi-shell">
+    <!-- Header -->
+    <header class="bi-header">
+      <div class="brand">
+        <div class="brand-symbol">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="20" x2="18" y2="10"/>
+            <line x1="12" y1="20" x2="12" y2="4"/>
+            <line x1="6" y1="20" x2="6" y2="14"/>
+          </svg>
+        </div>
+        <div class="brand-text">
+          <h1>INSIGHTBI <span class="badge-olap">OLAP ENGINE v1.0</span></h1>
+          <p class="brand-tagline">EXECUTIVE REVENUE RECONCILIATION &amp; AD-HOC DATA SLICING</p>
+        </div>
+      </div>
+
+      <div class="header-controls">
+        <div class="sync-tag">
+          <span class="live-dot pulse"></span>
+          <span>TELEMETRY: PERSISTENT WAL</span>
+        </div>
+        <button id="exportCsvBtn" class="btn btn-export">Export Filtered CSV</button>
+        <button id="resetFiltersBtn" class="btn btn-secondary">Reset Filters</button>
+      </div>
+    </header>
+
+    <!-- Global Dimension Filter Bar -->
+    <section class="filter-strip">
+      <div class="filter-item">
+        <label>Region</label>
+        <select id="filterRegion">
+          <option value="">All Global Regions</option>
+        </select>
+      </div>
+
+      <div class="filter-item">
+        <label>Product Category</label>
+        <select id="filterCategory">
+          <option value="">All Categories</option>
+        </select>
+      </div>
+
+      <div class="filter-item">
+        <label>Sales Channel</label>
+        <select id="filterChannel">
+          <option value="">All Channels</option>
+        </select>
+      </div>
+
+      <div class="filter-item">
+        <label>Date Range (Start - End)</label>
+        <div class="date-inputs">
+          <input type="date" id="filterStartDate">
+          <span class="date-sep">to</span>
+          <input type="date" id="filterEndDate">
+        </div>
+      </div>
+
+      <div class="filter-actions">
+        <button id="applyFiltersBtn" class="btn btn-primary">Apply Slicing</button>
+      </div>
+    </section>
+
+    <!-- Executive KPI Bar -->
+    <section class="kpi-grid">
+      <div class="kpi-card card-rev">
+        <span class="kpi-title">TOTAL GROSS REVENUE</span>
+        <span class="kpi-value text-emerald" id="kpiRevenue">$0.00</span>
+        <span class="kpi-foot" id="kpiRevenueSub">Billed Invoices</span>
+      </div>
+
+      <div class="kpi-card card-profit">
+        <span class="kpi-title">NET OPERATING PROFIT</span>
+        <span class="kpi-value text-blue" id="kpiProfit">$0.00</span>
+        <span class="kpi-foot">After Direct Costs</span>
+      </div>
+
+      <div class="kpi-card card-margin">
+        <span class="kpi-title">BLENDED GROSS MARGIN</span>
+        <span class="kpi-value text-gold" id="kpiMargin">0.0%</span>
+        <span class="kpi-foot">Profit / Revenue Ratio</span>
+      </div>
+
+      <div class="kpi-card">
+        <span class="kpi-title">AVERAGE ORDER VALUE</span>
+        <span class="kpi-value" id="kpiAOV">$0.00</span>
+        <span class="kpi-foot">Per Completed Order</span>
+      </div>
+
+      <div class="kpi-card">
+        <span class="kpi-title">VOLUME &amp; CLIENTS</span>
+        <span class="kpi-value" id="kpiVolume">0 units</span>
+        <span class="kpi-foot" id="kpiCustomers">0 Unique Customers</span>
+      </div>
+    </section>
+
+    <!-- Main Analytics Workspaces -->
+    <main class="bi-workspaces">
+      <!-- Left Column: Ad-hoc Query & Slicing Studio -->
+      <section class="panel panel-adhoc">
+        <div class="panel-header">
+          <div class="header-left">
+            <h2>Multi-Dimensional Slicing Studio</h2>
+            <span class="panel-sub">Custom Pivot Aggregations</span>
+          </div>
+
+          <div class="adhoc-controls">
+            <select id="adhocDimension">
+              <option value="category">Slice by: Category</option>
+              <option value="region">Slice by: Region</option>
+              <option value="channel">Slice by: Channel</option>
+              <option value="product_name">Slice by: Product Name</option>
+              <option value="date">Slice by: Date</option>
+            </select>
+
+            <select id="adhocMetric">
+              <option value="revenue">Metric: Revenue ($)</option>
+              <option value="profit">Metric: Net Profit ($)</option>
+              <option value="units">Metric: Units Sold</option>
+              <option value="orders">Metric: Order Count</option>
+              <option value="avg_order_value">Metric: Average Order Value</option>
+              <option value="avg_margin">Metric: Avg Margin %</option>
+            </select>
+
+            <button id="runQueryBtn" class="btn btn-sm btn-primary">Execute Slice</button>
+          </div>
+        </div>
+
+        <div class="table-container">
+          <table class="data-table" id="adhocTable">
+            <thead>
+              <tr>
+                <th id="thDimension">Dimension</th>
+                <th class="text-right" id="thMetric">Metric Value</th>
+                <th class="text-right">Transaction Count</th>
+                <th class="text-right">Revenue Contributed</th>
+              </tr>
+            </thead>
+            <tbody id="adhocTableBody">
+              <!-- Dynamically populated rows -->
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Right Column: Temporal Trends & Performance Breakdown -->
+      <section class="panel panel-breakdowns">
+        <div class="panel-header">
+          <h2>Revenue Velocity &amp; Regional Performance</h2>
+        </div>
+
+        <!-- Sub Tabs -->
+        <div class="sub-tab-strip">
+          <button class="sub-tab-btn active" data-sub="trendsSub">Daily Trend Stream</button>
+          <button class="sub-tab-btn" data-sub="categoriesSub">Category Share</button>
+          <button class="sub-tab-btn" data-sub="regionsSub">Regional Matrix</button>
+        </div>
+
+        <!-- Sub Tab 1: Trends -->
+        <div class="sub-content active" id="trendsSub">
+          <div class="table-container-scroll">
+            <table class="data-table" id="trendsTable">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th class="text-right">Revenue</th>
+                  <th class="text-right">Profit</th>
+                  <th class="text-right">Units</th>
+                </tr>
+              </thead>
+              <tbody id="trendsTableBody">
+                <!-- Trend rows -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Sub Tab 2: Categories -->
+        <div class="sub-content" id="categoriesSub">
+          <div class="table-container-scroll">
+            <table class="data-table" id="categoriesTable">
+              <thead>
+                <tr>
+                  <th>Category</th>
+                  <th class="text-right">Revenue</th>
+                  <th class="text-right">Margin %</th>
+                  <th class="text-right">Orders</th>
+                </tr>
+              </thead>
+              <tbody id="categoriesTableBody">
+                <!-- Category rows -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Sub Tab 3: Regions -->
+        <div class="sub-content" id="regionsSub">
+          <div class="table-container-scroll">
+            <table class="data-table" id="regionsTable">
+              <thead>
+                <tr>
+                  <th>Region</th>
+                  <th class="text-right">Revenue</th>
+                  <th class="text-right">Profit</th>
+                  <th class="text-right">Avg Order</th>
+                </tr>
+              </thead>
+              <tbody id="regionsTableBody">
+                <!-- Region rows -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
